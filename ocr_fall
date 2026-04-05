@@ -11,23 +11,51 @@ while True:
     if ret == False:
         break
 
-    results = model(frame)
+    results = model.track(frame, persist=True)
 
     boxes = results[0].boxes
+    names = results[0].names
 
-    for box in boxes:
-        x1, y1, x2, y2 = box.xyxy[0]
-        confidence = box.conf[0]
-        class_id = box.cls[0]
+    if boxes is not None:
+        for box in boxes:
+            x1, y1, x2, y2 = box.xyxy[0]
+            confidence = box.conf[0]
+            class_id = int(box.cls[0])
+            class_name = names[class_id]
 
-        print("bbox:", x1, y1, x2, y2)
-        print("confidence:", confidence)
-        print("class_id:", class_id)
-        print("------")
+            if class_name != "person":
+                continue
 
-    annotated_frame = results[0].plot()
+            track_id = None
 
-    cv2.imshow("frame", annotated_frame)
+            if box.id is not None:
+                track_id = int(box.id[0])
+
+            print("track_id:", track_id)
+            print("bbox:", x1, y1, x2, y2)
+            print("confidence:", confidence)
+            print("class_name:", class_name)
+            print("------")
+
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
+
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+            if track_id is not None:
+                cv2.putText(
+                    frame,
+                    f"track_id: {track_id}",
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2
+                )
+
+    cv2.imshow("frame", frame)
 
     key = cv2.waitKey(1)
 
